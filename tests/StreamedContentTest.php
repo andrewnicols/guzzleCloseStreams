@@ -10,28 +10,6 @@ use PHPUnit\Framework\TestCase;
 final class StreamedContentTest extends TestCase
 {
 
-    /** @var Client */
-    protected ?Client $client = null;
-
-    public function setUp(): void
-    {
-        $this->setUpClient();
-    }
-
-    protected function setUpClient(): void
-    {
-        $mock = new MockHandler([
-            new Response(200, [], 'Success'),
-        ]);
-
-        $this->client = new Client(['handler' => HandlerStack::create($mock)]);
-    }
-
-    protected function destroyClient(): void
-    {
-        $this->client = null;
-    }
-
     /**
      * @dataProvider provider
      */
@@ -46,7 +24,11 @@ final class StreamedContentTest extends TestCase
 
         $contentStream = Utils::streamFor($handle);
 
-        $this->client->request('POST', '/', [
+        $mock = new MockHandler([
+            new Response(200, [], 'Success'),
+        ]);
+        $client = new Client(['handler' => HandlerStack::create($mock)]);
+        $client->request('POST', '/', [
             'multipart' => [
                 [
                     'name' => 'filecontents',
@@ -57,7 +39,6 @@ final class StreamedContentTest extends TestCase
 
         if ($gc) {
             $contentStream->close();
-            $this->destroyClient();
         }
 
         unlink($tmpfile);
