@@ -58,4 +58,41 @@ final class StreamedContentTest extends TestCase
         unlink($tmpfile);
         $this->assertFalse(file_exists($tmpfile));
     }
+
+    /**
+     * @dataProvider provider
+     */
+    public function testStreamedContentExplicitClose(): void
+    {
+        $tmpfile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'testdata' . DIRECTORY_SEPARATOR . 'explicitlyClosed.txt';
+        $this->assertFalse(file_exists($tmpfile));
+
+        // Create a new file.
+        file_put_contents($tmpfile, 'Some example content');
+        $this->assertTrue(file_exists($tmpfile));
+
+        $stream = Utils::streamFor(fopen($tmpfile, "r+"));
+
+        $mock = new MockHandler([
+            new Response(200, [], 'Success'),
+        ]);
+        $client = new Client(['handler' => HandlerStack::create($mock)]);
+        $client->request('POST', '/', [
+            'multipart' => [
+                [
+                    'name' => 'filecontents',
+                    'contents' => $stream,
+                ],
+            ],
+        ]);
+
+        // Explicitly close the stream.
+        // This will allow a subsequent file handle to be opened in the next test for the same file.
+        $stream->close();
+
+        // Unset the client, and unlink the tempfile.
+        unset($client);
+        unlink($tmpfile);
+        $this->assertFalse(file_exists($tmpfile));
+    }
 }
