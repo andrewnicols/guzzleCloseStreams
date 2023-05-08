@@ -135,11 +135,8 @@ final class StreamedContentTest extends TestCase
         $this->assertFalse(file_exists($tmpfile));
     }
 
-    /**
-     * @dataProvider provider
-     */
     public function testStreamedContentUnsetMockCloseHandle() {
-        $tmpfile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'testdata' . DIRECTORY_SEPARATOR . 'unsetMock.txt';
+        $tmpfile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'testdata' . DIRECTORY_SEPARATOR . 'unsetMockAgain.txt';
         $this->assertFalse(file_exists($tmpfile));
 
         // Create a new file.
