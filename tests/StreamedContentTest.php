@@ -20,27 +20,24 @@ final class StreamedContentTest extends TestCase
      */
     public static function provider(): array {
         return [
-            [true],
-            [false],
-            [true],
+            [],
+            [],
+            [],
         ];
     }
 
     /**
      * @dataProvider provider
      */
-    public function testStreamedContentNoVar(bool $unsetClient): void
-    {
-        $this->runStreamTest($unsetClient);
-    }
-
-    protected function runStreamTest(bool $unsetClient): void
+    public function testStreamedContentNoVar(): void
     {
         $tmpfile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'testdata' . DIRECTORY_SEPARATOR . 'tmpfile2.txt';
         $this->assertFalse(file_exists($tmpfile));
 
+        // Create a new file.
+        // Note: On subsequent runs, the file handle has _not_ been properly closed.
+        // While the file itself is removed, php is unable to create a new file in the same location until the file handle is closed.
         file_put_contents($tmpfile, 'Some example content');
-        $handle = fopen($tmpfile, "r+");
         $this->assertTrue(file_exists($tmpfile));
 
         $mock = new MockHandler([
@@ -51,15 +48,13 @@ final class StreamedContentTest extends TestCase
             'multipart' => [
                 [
                     'name' => 'filecontents',
-                    'contents' => Utils::streamFor($handle),
+                    'contents' => Utils::streamFor(fopen($tmpfile, "r+")),
                 ],
             ],
         ]);
 
-        if ($unsetClient) {
-            unset($client);
-        }
-
+        // Unset the client, and unlink the tempfile.
+        unset($client);
         unlink($tmpfile);
         $this->assertFalse(file_exists($tmpfile));
     }
