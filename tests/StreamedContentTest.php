@@ -20,21 +20,21 @@ final class StreamedContentTest extends TestCase
      */
     public static function provider(): array {
         return [
-            [],
-            [],
-            [],
+            [true],
+            [false],
+            [true],
         ];
     }
 
     /**
      * @dataProvider provider
      */
-    public function testStreamedContentNoVar(): void
+    public function testStreamedContentNoVar(bool $unsetClient): void
     {
-        $this->runStreamTest();
+        $this->runStreamTest($unsetClient);
     }
 
-    protected function runStreamTest(): void
+    protected function runStreamTest(bool $unsetClient): void
     {
         $tmpfile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'testdata' . DIRECTORY_SEPARATOR . 'tmpfile2.txt';
         $this->assertFalse(file_exists($tmpfile));
@@ -55,6 +55,10 @@ final class StreamedContentTest extends TestCase
                 ],
             ],
         ]);
+
+        if ($unsetClient) {
+            unset($client);
+        }
 
         unlink($tmpfile);
         $this->assertFalse(file_exists($tmpfile));
