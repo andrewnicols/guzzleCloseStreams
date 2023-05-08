@@ -18,8 +18,7 @@ final class StreamedContentTest extends TestCase
      *
      * @return array
      */
-    public static function provider(): array
-    {
+    public static function provider(): array {
         return [
             [],
             [],
@@ -31,6 +30,11 @@ final class StreamedContentTest extends TestCase
      * @dataProvider provider
      */
     public function testStreamedContentNoVar(): void
+    {
+        $this->runStreamTest();
+    }
+
+    protected function runStreamTest(): void
     {
         $tmpfile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'testdata' . DIRECTORY_SEPARATOR . 'tmpfile2.txt';
         $this->assertFalse(file_exists($tmpfile));
