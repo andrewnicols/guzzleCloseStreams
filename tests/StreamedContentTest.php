@@ -37,7 +37,7 @@ final class StreamedContentTest extends TestCase
         // Create a new file.
         // Note: On subsequent runs, the file handle has _not_ been properly closed.
         // While the file itself is removed, php is unable to create a new file in the same location until the file handle is closed.
-        file_put_contents($tmpfile, 'Some example content');
+        $this->assertGreaterThan(0, file_put_contents($tmpfile, 'Some example content'));
         $this->assertTrue(file_exists($tmpfile));
 
         $mock = new MockHandler([
@@ -68,7 +68,7 @@ final class StreamedContentTest extends TestCase
         $this->assertFalse(file_exists($tmpfile));
 
         // Create a new file.
-        file_put_contents($tmpfile, 'Some example content');
+        $this->assertGreaterThan(0, file_put_contents($tmpfile, 'Some example content'));
         $this->assertTrue(file_exists($tmpfile));
 
         $stream = Utils::streamFor(fopen($tmpfile, "r+"));
@@ -95,4 +95,42 @@ final class StreamedContentTest extends TestCase
         unlink($tmpfile);
         $this->assertFalse(file_exists($tmpfile));
     }
+
+    /**
+     * @dataProvider provider
+     */
+    public function testStreamedContentUnsetMock(): void {
+        $tmpfile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'testdata' . DIRECTORY_SEPARATOR . 'unsetMock.txt';
+        $this->assertFalse(file_exists($tmpfile));
+
+        // Create a new file.
+        // Note: On subsequent runs, the file handle has _not_ been properly closed.
+        // While the file itself is removed, php is unable to create a new file in the same location until the file handle is closed.
+        $this->assertGreaterThan(0, file_put_contents($tmpfile, 'Some example content'));
+        $this->assertTrue(file_exists($tmpfile));
+
+        $client = new Client(
+            [
+                'handler' => HandlerStack::create(new MockHandler(
+                    [
+                        new Response(200, [], 'Success'),
+                    ]
+                )),
+            ]
+        );
+        $client->request('POST', '/', [
+            'multipart' => [
+                [
+                    'name' => 'filecontents',
+                    'contents' => Utils::streamFor(fopen($tmpfile, "r+")),
+                ],
+            ],
+        ]);
+
+        // Unset the client, and unlink the tempfile.
+        unset($client);
+        unlink($tmpfile);
+        $this->assertFalse(file_exists($tmpfile));
+    }
+
 }
