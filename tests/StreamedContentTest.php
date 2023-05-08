@@ -7,22 +7,37 @@ use GuzzleHttp\Psr7\Utils;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Test for content streams not being closed properly on windows.
+ */
 final class StreamedContentTest extends TestCase
 {
+    /**
+     * Data provider for testStreamedContentNoVar test.
+     * The same test will run multiple times.
+     *
+     * @return array
+     */
+    public static function provider(): array
+    {
+        return [
+            [],
+            [],
+            [],
+        ];
+    }
 
     /**
      * @dataProvider provider
      */
-    public function testStreamedContent(bool $gc): void
+    public function testStreamedContentNoVar(): void
     {
-        $tmpfile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'testdata' . DIRECTORY_SEPARATOR . 'tmpfile.txt';
+        $tmpfile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'testdata' . DIRECTORY_SEPARATOR . 'tmpfile2.txt';
         $this->assertFalse(file_exists($tmpfile));
 
         file_put_contents($tmpfile, 'Some example content');
         $handle = fopen($tmpfile, "r+");
         $this->assertTrue(file_exists($tmpfile));
-
-        $contentStream = Utils::streamFor($handle);
 
         $mock = new MockHandler([
             new Response(200, [], 'Success'),
@@ -32,27 +47,12 @@ final class StreamedContentTest extends TestCase
             'multipart' => [
                 [
                     'name' => 'filecontents',
-                    'contents' => $contentStream,
+                    'contents' => Utils::streamFor($handle),
                 ],
             ],
         ]);
 
-        if ($gc) {
-            $contentStream->close();
-        }
-
         unlink($tmpfile);
         $this->assertFalse(file_exists($tmpfile));
-    }
-
-    public static function provider(): array
-    {
-        return [
-            [true],
-            [true],
-            [false],
-            [false],
-            [true],
-        ];
     }
 }
